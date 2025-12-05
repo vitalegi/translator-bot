@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+
+oidc:
+  authorization_url: ${OIDC_AUTHORIZATION_URL}
+  clientId: ${OIDC_CLIENT_ID}
+  cookie:
+    # 365d = 31536000s
+    maxAge: 31536000
+    secure: true
+    httpOnly: true
+    domain: "mangar.go-pucci.com"
+
+security:
+  cors:
+    allowedOrigins: https://google.com

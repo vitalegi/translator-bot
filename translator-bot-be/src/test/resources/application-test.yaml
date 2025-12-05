@@ -1,0 +1,21 @@
+OIDC_JWKS_URI: http://localhost:8080/jwks
+OIDC_ISSUER: http://localhost:8080
+OIDC_AUTHORIZATION_URL: http://localhost:8080/token
+OIDC_CLIENT_ID: clientId123
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+  datasource:
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: jdbc:hsqldb:mem:app;
+    username: sa
+    password: ''
+
+oidc:
+  cookie:
+    maxAge: 1000
+    secure: true
+    httpOnly: true
+    domain: google.com

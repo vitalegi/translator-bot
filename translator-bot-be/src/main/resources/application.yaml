@@ -1,0 +1,100 @@
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+  tomcat:
+    basedir: ${TOMCAT_BASEDIR:./tomcat}
+    accesslog:
+      enabled: true
+      buffered: false
+      directory: logs/
+      prefix: access_log_
+      suffix: .log
+      file-date-format: yyyy-MM-dd
+      pattern: "%{yyyy-MM-dd'T'HH:mm:ss.SSSX}t [%I] \"%h\" %s b_sent=%b t_proc=%D t_commit=%F %H %m \"%U%q\""
+
+spring:
+  application:
+    name: translator-bot-be
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  datasource:
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: jdbc:hsqldb:file:db/app;
+    username: sa
+    password: ''
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: 'classpath:db/liquibase-changelog.yaml'
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OIDC_JWKS_URI}
+          issuer-uri: ${OIDC_ISSUER}
+          jws-algorithm: RS256
+
+oidc:
+  authorization_url: ${OIDC_AUTHORIZATION_URL}
+  clientId: ${OIDC_CLIENT_ID}
+  cookie:
+    maxAge: 3600
+    secure: false
+    httpOnly: false
+
+security:
+  cors:
+    allowedOrigins: http://localhost:9000
+    allowedMethods: GET, POST, PUT, DELETE
+    allowCredentials: true
+    allowedHeaders: Content-Type, Access-Control-Request-Method, Access-Control-Allow-Credentials, Access-Control-Allow-Origin, Access-Control-Allow-Headers, x-requested-with, Authorization, origin, accept
+  rbac:
+    ADMIN: ADMIN
+
+exception:
+  logging:
+    single-line: false
+    skip-classes: >
+      at org.springframework.web.servlet.mvc.method.annotation,
+      at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke,
+      at jakarta.servlet.http.HttpServlet,
+      at org.springframework.web.servlet.FrameworkServlet,
+      at org.apache.catalina.core.ApplicationFilterChain,
+      at org.apache.tomcat.websocket.server.WsFilter,
+      at org.springframework.web.filter.RequestContextFilter,
+      at org.springframework.web.filter.OncePerRequestFilter,
+      at org.springframework.web.filter.FormContentFilter,
+      at org.springframework.web.filter.OncePerRequestFilter,
+      at org.springframework.web.filter.CharacterEncodingFilter,
+      at org.apache.catalina.core,
+      at org.apache.tomcat.util,
+      at org.springframework.web.servlet.resource.ResourceHttpRequestHandler,
+      at org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter,
+      at org.springframework.web.servlet.DispatcherServlet,
+      at org.springframework.web.filter.CompositeFilter,
+      at org.springframework.security.web.FilterChainProxy,
+      at org.springframework.security.web.access.intercept.AuthorizationFilter,
+      at org.springframework.security.web.access.ExceptionTranslationFilter,
+      at org.springframework.security.web.session.SessionManagementFilter,
+      at org.springframework.security.web.authentication.AnonymousAuthenticationFilter,
+      at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter,
+      at org.springframework.security.web.savedrequest.RequestCacheAwareFilter,
+      at org.springframework.security.web.authentication.logout.LogoutFilter,
+      at org.springframework.web.filter.CorsFilter.doFilterInternal,
+      at org.springframework.security.web.header.HeaderWriterFilter,
+      at org.springframework.security.web.context.SecurityContextHolderFilter,
+      at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter,
+      at org.springframework.security.web.session.DisableEncodeUrlFilter,
+      at org.springframework.web.servlet.handler.HandlerMappingIntrospector,
+      at org.springframework.web.filter.DelegatingFilterProxy
+
+logging.level:
+  org.springframework: INFO
