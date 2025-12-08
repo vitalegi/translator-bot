@@ -118,7 +118,7 @@ public class OnMessageCreate {
     }
 
     protected String formatOutputMessage(String author, String sourceLanguage, String sourceMessage, String targetMessage) {
-        return author + ": " + targetMessage + "\nOriginal: " + sourceMessage;
+        return "**" + author + "**: " + targetMessage + "\n--------------\n" + sourceLanguage + ": _" + sourceMessage + "_";
     }
 
     protected Mono<String> computeTranslation(Guild guild, String messageAuthor, String sourceLanguage, String targetLanguage, String message) {
