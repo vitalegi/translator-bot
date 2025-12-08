@@ -26,7 +26,7 @@ public class MessageTranslatorEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID messageTranslationId;
     private String sourceLanguage;
     private String targetLanguage;
     private String sourceMessage;
@@ -42,16 +42,16 @@ public class MessageTranslatorEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MessageTranslatorEntity that = (MessageTranslatorEntity) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(messageTranslationId, that.messageTranslationId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(messageTranslationId);
     }
 
     @Override
     public String toString() {
-        return "MessageTranslatorEntity{" + "id='" + id + '\'' + ", sourceLanguage='" + sourceLanguage + '\'' + ", targetLanguage='" + targetLanguage + '\'' + ", sourceMessage='" + sourceMessage + '\'' + ", targetMessage='" + targetMessage + '\'' + ", sourceLength=" + sourceLength + ", targetLength=" + targetLength + ", hits=" + hits + ", creationDate=" + creationDate + ", lastUpdate=" + lastUpdate + '}';
+        return "MessageTranslatorEntity{" + "messageTranslationId='" + messageTranslationId + '\'' + ", sourceLanguage='" + sourceLanguage + '\'' + ", targetLanguage='" + targetLanguage + '\'' + ", sourceMessage='" + sourceMessage + '\'' + ", targetMessage='" + targetMessage + '\'' + ", sourceLength=" + sourceLength + ", targetLength=" + targetLength + ", hits=" + hits + ", creationDate=" + creationDate + ", lastUpdate=" + lastUpdate + '}';
     }
 }

@@ -7,8 +7,8 @@
 
     <changeSet id="v1-01-003" author="vitalegi">
         <createTable tableName="message_translation">
-            <column name="id" type="uuid">
-                <constraints nullable="false"/>
+            <column name="message_translation_id" type="uuid">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="message_translation_pk"/>
             </column>
             <column name="source_language" type="varchar(10)">
                 <constraints nullable="false"/>
@@ -40,4 +40,220 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="v1-01-004" author="vitalegi">
+        <createIndex indexName="ix_message_translation_msg" tableName="message_translation">
+            <column name="source_language"/>
+            <column name="target_language"/>
+            <column name="source_message"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="v1-01-010" author="vitalegi">
+        <createTable tableName="server_channel_group">
+            <column name="server_channel_group_id" type="uuid">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="server_channel_group_pk"/>
+            </column>
+            <column name="name" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_update" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="v1-01-020" author="vitalegi">
+        <createTable tableName="discord_server">
+            <column name="discord_server_id" type="varchar(100)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="discord_server_pk"/>
+            </column>
+            <column name="name" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_update" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="v1-01-030" author="vitalegi">
+        <createTable tableName="discord_server_user">
+            <column name="discord_server_user_id" type="uuid">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="discord_server_user_pk"/>
+            </column>
+            <column name="discord_server_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_update" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="v1-01-031" author="vitalegi">
+        <addUniqueConstraint tableName="discord_server_user"
+                             columnNames="discord_server_id, user_id"
+                             constraintName="uq_discord_server_user__server_id__user_id"
+                             deferrable="false"
+        />
+    </changeSet>
+
+    <changeSet id="v1-01-032" author="vitalegi">
+        <createIndex indexName="ix_discord_server_user_username" tableName="discord_server_user">
+            <column name="discord_server_id"/>
+            <column name="username"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="v1-01-033" author="vitalegi">
+        <addForeignKeyConstraint baseTableName="discord_server_user"
+                                 baseColumnNames="discord_server_id"
+                                 constraintName="fk_discord_server_user__server_id"
+                                 deferrable="false"
+                                 onDelete="CASCADE"
+                                 onUpdate="CASCADE"
+                                 referencedTableName="discord_server"
+                                 referencedColumnNames="discord_server_id"
+        />
+    </changeSet>
+
+    <changeSet id="v1-01-040" author="vitalegi">
+        <createTable tableName="discord_server_channel_language">
+            <column name="discord_server_channel_language_id" type="uuid">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="discord_server_channel_language_pk"/>
+            </column>
+            <column name="server_channel_group_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discord_server_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="channel_name" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="channel_source_language" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_update" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="v1-01-041" author="vitalegi">
+        <addUniqueConstraint tableName="discord_server_channel_language"
+                             columnNames="discord_server_id, channel_name"
+                             constraintName="uq_discord_server_channel_language__server_id__channel"
+                             deferrable="false"
+        />
+    </changeSet>
+
+    <changeSet id="v1-01-042" author="vitalegi">
+        <addForeignKeyConstraint baseTableName="discord_server_channel_language"
+                                 baseColumnNames="server_channel_group_id"
+                                 constraintName="fk_discord_server_channel_language__channel_id"
+                                 deferrable="false"
+                                 onDelete="CASCADE"
+                                 onUpdate="CASCADE"
+                                 referencedTableName="server_channel_group"
+                                 referencedColumnNames="server_channel_group_id"
+        />
+    </changeSet>
+
+    <changeSet id="v1-01-043" author="vitalegi">
+        <addForeignKeyConstraint baseTableName="discord_server_channel_language"
+                                 baseColumnNames="discord_server_id"
+                                 constraintName="fk_discord_server_channel_language__server_id"
+                                 deferrable="false"
+                                 onDelete="CASCADE"
+                                 onUpdate="CASCADE"
+                                 referencedTableName="discord_server"
+                                 referencedColumnNames="discord_server_id"
+        />
+    </changeSet>
+
+    <changeSet id="v1-01-050" author="vitalegi">
+        <createTable tableName="discord_server_user_message">
+            <column name="discord_server_user_message_id" type="uuid">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="discord_server_user_message_pk"/>
+            </column>
+            <column name="server_channel_group_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discord_server_id" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_language" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_language" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_length" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_length" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="v1-01-051" author="vitalegi">
+        <addForeignKeyConstraint baseTableName="discord_server_user_message"
+                                 baseColumnNames="discord_server_id"
+                                 constraintName="fk_discord_server_user_message__server_id"
+                                 deferrable="false"
+                                 onDelete="CASCADE"
+                                 onUpdate="CASCADE"
+                                 referencedTableName="discord_server"
+                                 referencedColumnNames="discord_server_id"
+        />
+    </changeSet>
+
+    <changeSet id="v1-01-052" author="vitalegi">
+        <addForeignKeyConstraint baseTableName="discord_server_user_message"
+                                 baseColumnNames="server_channel_group_id"
+                                 constraintName="discord_server_user_message__channel_id"
+                                 deferrable="false"
+                                 onDelete="CASCADE"
+                                 onUpdate="CASCADE"
+                                 referencedTableName="server_channel_group"
+                                 referencedColumnNames="server_channel_group_id"
+        />
+    </changeSet>
+    <changeSet id="v1-01-053" author="vitalegi">
+        <addForeignKeyConstraint baseTableName="discord_server_user_message"
+                                 baseColumnNames="user_id"
+                                 constraintName="discord_server_user_message__user_id"
+                                 deferrable="false"
+                                 onDelete="CASCADE"
+                                 onUpdate="CASCADE"
+                                 referencedTableName="discord_server_user"
+                                 referencedColumnNames="discord_server_user_id"
+        />
+    </changeSet>
 </databaseChangeLog>
