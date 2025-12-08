@@ -36,8 +36,16 @@ public class OnMessageCreate {
         var serverName = guild.getName();
         log.info("Server: {} - {}", serverId, serverName);
 
+        // TODO ignore message if server is not registered
+
         var channel = msg.getChannel().block();
         var channelId = getId(channel);
+
+        // TODO ignore message if channel is not registered
+
+        // TODO ignore message if server sent too many messages
+
+        // TODO ignore message if user sent too many messages
 
         //return msg.getChannel().flatMapMany(c -> c.createMessage(username + ": " + msg.getContent()));
         return getChannels(guild).zipWith(getUsername(msg)) //
@@ -50,15 +58,11 @@ public class OnMessageCreate {
 
         return Flux.fromIterable(channels) //
                 .filter(channel -> !getId(channel).equals(messageChannelId)) //
+                .filter(channel -> channel instanceof TextChannel) //
+                .map(channel -> (TextChannel) channel) //
                 .flatMap(channel -> {
                     log.info("Send message to {}", channel.getName());
-                    if (channel instanceof TextChannel textChannel) {
-                        log.info("Channel is text channel, send");
-                        return textChannel.createMessage(messageAuthor + ": " + msg.getContent());
-                    } else {
-                        log.info("Channel is: {}", channel.getClass());
-                        return Mono.empty();
-                    }
+                    return channel.createMessage(messageAuthor + ": " + msg.getContent());
                 });
     }
 
