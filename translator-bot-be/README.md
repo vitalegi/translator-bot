@@ -36,6 +36,9 @@ $env:AWS_BUCKET=*bucket*
 #$env:OIDC_AUTHORIZATION_URL=*authorization url*
 #$env:OIDC_CLIENT_ID=*client id*
 
+# Discord
+$env:DISCORD_TOKEN=*bot token*
+
 # optional values
 $env:SERVER_PORT=8080
 $env:TOMCAT_BASEDIR=./tomcat
