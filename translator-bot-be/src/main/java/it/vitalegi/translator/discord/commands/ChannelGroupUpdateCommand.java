@@ -10,10 +10,8 @@ import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 @Slf4j
 @Service
@@ -38,14 +36,9 @@ public class ChannelGroupUpdateCommand implements CommandHandler {
         var userId = e.getUser().getId().asString();
 
         var id = UUID.fromString(channelGroupId);
-        executeBlocking(() -> discordService.updateChannelGroup(id, name)).block();
+        DiscordBot.executeBlocking(() -> discordService.updateChannelGroup(id, name)).block();
         log.info("user {}, update-channel-group {} {}", userId, id, name);
 
         return e.reply("Successfully updated server");
-    }
-
-    protected <T> Mono<T> executeBlocking(Callable<T> callable) {
-        return Mono.fromCallable(callable) //
-                .subscribeOn(DiscordBot.scheduler());
     }
 }

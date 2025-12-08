@@ -6,12 +6,10 @@ import it.vitalegi.translator.discord.CommandHandler;
 import it.vitalegi.translator.discord.DiscordBot;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
 import it.vitalegi.translator.discord.service.DiscordPermissionService;
-import it.vitalegi.translator.entity.DiscordServerWhitelistEntity;
 import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -37,15 +35,9 @@ public class EnableServerCommand implements CommandHandler {
         };
         var userId = e.getUser().getId().asString();
 
-        executeBlocking(serverId, allowed).block();
+        DiscordBot.executeBlocking(() -> discordService.updateDiscordServerWhitelist(serverId, allowed));
         log.info("user {}, enable_server {}", userId, serverId);
 
         return e.reply("Successfully updated server");
     }
-
-    protected Mono<DiscordServerWhitelistEntity> executeBlocking(String serverId, boolean allowed) {
-        return Mono.fromCallable(() -> discordService.updateDiscordServerWhitelist(serverId, allowed)) //
-                .subscribeOn(DiscordBot.scheduler());
-    }
-
 }

@@ -10,7 +10,6 @@ import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -29,13 +28,7 @@ public class InfoCommand implements CommandHandler {
     public InteractionApplicationCommandCallbackReplyMono onEvent(ChatInputInteractionEvent e) {
         discordPermissionService.checkPermission(e, DiscordPermission.SUPERADMIN);
 
-        var text = executeBlocking().block();
+        var text = DiscordBot.executeBlocking(() -> discordService.getInfo()).block();
         return e.reply(text);
     }
-
-    protected Mono<String> executeBlocking() {
-        return Mono.fromCallable(() -> discordService.getInfo()) //
-                .subscribeOn(DiscordBot.scheduler());
-    }
-
 }

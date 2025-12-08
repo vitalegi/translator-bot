@@ -12,6 +12,7 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 @Slf4j
 @Service
@@ -23,6 +24,12 @@ public class DiscordBot {
 
     public static Scheduler scheduler() {
         return Schedulers.boundedElastic();
+    }
+
+
+    public static <T> Mono<T> executeBlocking(Callable<T> callable) {
+        return Mono.fromCallable(callable) //
+                .subscribeOn(DiscordBot.scheduler());
     }
 
     public DiscordBot(OnMessageCreate onMessageCreate, OnChatInputInteraction onChatInputInteraction, @Value("${DISCORD_TOKEN}") String token) {

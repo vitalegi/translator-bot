@@ -10,7 +10,6 @@ import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -32,15 +31,9 @@ public class AddServerCommand implements CommandHandler {
         var name = e.getOptionAsString("name").orElseThrow(() -> new IllegalArgumentException("name is mandatory"));
         var userId = e.getUser().getId().asString();
 
-        executeBlocking(serverId, name).block();
+        DiscordBot.executeBlocking(() -> discordService.addServer(serverId, name)).block();
         log.info("user {}, add_server {} {}", userId, serverId, name);
 
         return e.reply("Successfully updated server");
     }
-
-    protected Mono<String> executeBlocking(String serverId, String name) {
-        return Mono.fromCallable(() -> discordService.addServer(serverId, name)) //
-                .subscribeOn(DiscordBot.scheduler());
-    }
-
 }

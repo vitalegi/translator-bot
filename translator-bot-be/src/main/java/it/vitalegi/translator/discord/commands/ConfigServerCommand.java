@@ -6,12 +6,10 @@ import it.vitalegi.translator.discord.CommandHandler;
 import it.vitalegi.translator.discord.DiscordBot;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
 import it.vitalegi.translator.discord.service.DiscordPermissionService;
-import it.vitalegi.translator.entity.DiscordServerEntity;
 import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -35,15 +33,9 @@ public class ConfigServerCommand implements CommandHandler {
 
         var userId = e.getUser().getId().asString();
 
-        executeBlocking(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser).block();
+        DiscordBot.executeBlocking(() -> discordService.updateDiscordServerLimits(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser));
         log.info("user {}, config_server {}, max={}, per_user={}", userId, serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser);
 
         return e.reply("Successfully updated server");
     }
-
-    protected Mono<DiscordServerEntity> executeBlocking(String serverId, long monthlyMaxTotalCharacters, long monthlyMaxTotalCharactersPerUser) {
-        return Mono.fromCallable(() -> discordService.updateDiscordServerLimits(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser)) //
-                .subscribeOn(DiscordBot.scheduler());
-    }
-
 }

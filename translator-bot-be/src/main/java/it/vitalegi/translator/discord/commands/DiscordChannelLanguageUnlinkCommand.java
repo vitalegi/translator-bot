@@ -10,9 +10,6 @@ import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
-
-import java.util.concurrent.Callable;
 
 @Slf4j
 @Service
@@ -38,14 +35,9 @@ public class DiscordChannelLanguageUnlinkCommand implements CommandHandler {
         var channel = e.getOptionAsString("channel").orElseThrow(() -> new IllegalArgumentException("channel is mandatory"));
         var userId = e.getUser().getId().asString();
 
-        executeBlocking(() -> discordService.removeDiscordServerChannelLanguage(channelGroup, serverId, channel)).block();
+        DiscordBot.executeBlocking(() -> discordService.removeDiscordServerChannelLanguage(channelGroup, serverId, channel)).block();
         log.info("user {}, discord-channel-language-unlink {} {} {}", userId, channelGroup, serverId, channel);
 
         return e.reply("Successfully updated server");
-    }
-
-    protected <T> Mono<T> executeBlocking(Callable<T> callable) {
-        return Mono.fromCallable(callable) //
-                .subscribeOn(DiscordBot.scheduler());
     }
 }

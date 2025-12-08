@@ -17,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
-import reactor.core.scheduler.Schedulers;
 
 import java.time.Instant;
 import java.util.List;
@@ -64,7 +62,7 @@ public class OnMessageCreate {
 
         // TODO ignore message if user sent too many messages
 
-        return getUsedQuota().flatMap(quota -> {
+        return DiscordBot.executeBlocking(this::getUsedQuotaBlocking).flatMap(quota -> {
             if (quota > config.getMaxTotalCharacters()) {
                 log.error("Server {} ({}) used allowed quota. Allowed: {}, actual: {}", serverId, serverName, config.getMaxTotalCharacters(), quota);
                 return Mono.empty();
@@ -73,11 +71,6 @@ public class OnMessageCreate {
         }).flatMapMany(quota -> //
                 getChannels(guild).zipWith(getUsername(msg)) //
                         .flatMapMany((tuple) -> applyLogic(msg, guild, tuple.getT1(), channelId, tuple.getT2())));
-    }
-
-    protected Mono<Long> getUsedQuota() {
-        return Mono.fromCallable(this::getUsedQuotaBlocking) //
-                .subscribeOn(DiscordBot.scheduler());
     }
 
     protected long getUsedQuotaBlocking() {
@@ -113,17 +106,12 @@ public class OnMessageCreate {
         }
         log.info("Send message to {}", targetChannel.getName());
 
-        return computeTranslation(guild, messageAuthor, sourceLanguage, targetLanguage, msg.getContent()) //
+        return DiscordBot.executeBlocking(() -> computeTranslationBlocking(guild, messageAuthor, sourceLanguage, targetLanguage, msg.getContent())) //
                 .flatMap(translatedMessage -> targetChannel.createMessage(formatOutputMessage(messageAuthor, sourceLanguage, msg.getContent(), translatedMessage)));
     }
 
     protected String formatOutputMessage(String author, String sourceLanguage, String sourceMessage, String targetMessage) {
         return "**" + author + "**: " + targetMessage + "\n--------------\n" + sourceLanguage + ": _" + sourceMessage + "_";
-    }
-
-    protected Mono<String> computeTranslation(Guild guild, String messageAuthor, String sourceLanguage, String targetLanguage, String message) {
-        return Mono.fromCallable(() -> computeTranslationBlocking(guild, messageAuthor, sourceLanguage, targetLanguage, message)) //
-                .subscribeOn(DiscordBot.scheduler());
     }
 
     protected String computeTranslationBlocking(Guild guild, String messageAuthor, String sourceLanguage, String targetLanguage, String message) {

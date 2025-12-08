@@ -39,14 +39,10 @@ public class DiscordChannelLanguageLinkCommand implements CommandHandler {
         var language = e.getOptionAsString("language").orElseThrow(() -> new IllegalArgumentException("language is mandatory"));
         var userId = e.getUser().getId().asString();
 
-        executeBlocking(() -> discordService.addDiscordServerChannelLanguage(channelGroupName, serverId, channel, language)).block();
+        DiscordBot.executeBlocking(() -> discordService.addDiscordServerChannelLanguage(channelGroupName, serverId, channel, language)).block();
         log.info("user {}, discord-channel-language-link {} {} {} {}", userId, channelGroupName, serverId, channel, language);
 
         return e.reply("Successfully updated server");
     }
 
-    protected <T> Mono<T> executeBlocking(Callable<T> callable) {
-        return Mono.fromCallable(callable) //
-                .subscribeOn(DiscordBot.scheduler());
-    }
 }
