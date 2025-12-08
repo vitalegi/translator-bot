@@ -30,7 +30,6 @@ public class InfoCommand implements CommandHandler {
         discordPermissionService.checkPermission(e, DiscordPermission.SUPERADMIN);
 
         var text = executeBlocking().block();
-        log.info("Out: {}", text);
         return e.reply(text);
     }
 

@@ -62,12 +62,23 @@ public class DiscordService {
         for (var server : servers) {
             var totalSourceCharacters = discordServerUserMessageRepository.getTotalSourceLength(from, server.getDiscordServerId());
             var totalMessagesCount = discordServerUserMessageRepository.getTotalMessagesCount(from, server.getDiscordServerId());
+            var channelGroups = serverChannelGroupRepository.findAllByServerId(server.getDiscordServerId());
+
             sb.append("\n- ").append(server.getDiscordServerId()).append(" | ").append(server.getName()) //
                     .append("\n  max chars per month: ").append(server.getMonthlyMaxTotalCharacters()) //
                     .append("\n  max chars per month, per user: ").append(server.getMonthlyMaxTotalCharactersPerUser()) //
                     .append("\n  used quota: ").append(totalSourceCharacters) //
                     .append("\n  total translated messages: ").append(totalMessagesCount) //
-            ;
+                    .append("\n  channels:");
+
+            channelGroups.forEach(cg -> {
+                sb.append("\n  - ").append(cg.getServerChannelGroupId()).append(": ").append(cg.getName());
+                sb.append("\n    entries:");
+                var channelLanguages = discordServerChannelLanguageRepository.findAllByServerId(server.getDiscordServerId(), cg.getServerChannelGroupId());
+                channelLanguages.stream() //
+                        //.filter(cl -> cl.getServerChannelGroup().getServerChannelGroupId().equals(cg.getServerChannelGroupId()))
+                        .forEach(cl -> sb.append("\n    - ").append(cl.getChannelName()).append(": ").append(cl.getChannelSourceLanguage()));
+            });
         }
         return sb.toString();
     }

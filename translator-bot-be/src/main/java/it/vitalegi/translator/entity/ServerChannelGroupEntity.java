@@ -1,9 +1,11 @@
 package it.vitalegi.translator.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +15,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -30,6 +33,8 @@ public class ServerChannelGroupEntity {
     private String name;
     private Instant creationDate;
     private Instant lastUpdate;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "serverChannelGroup")
+    private Set<DiscordServerChannelLanguageEntity> discordServerChannelLanguages;
 
     @Override
     public boolean equals(Object o) {
