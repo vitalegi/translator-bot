@@ -54,7 +54,8 @@ public class GlobalCommandsRegister {
         /* Bulk overwrite commands. This is now idempotent, so it is safe to use this even when only 1 command
         is changed/added/removed
         */
-        applicationService.bulkOverwriteGlobalApplicationCommand(applicationId, commands).doOnNext(cmd -> log.info("Successfully registered Global Command {}", cmd.name())).doOnError(e -> log.error("Failed to register global commands", e)).subscribe();
+        applicationService.bulkOverwriteGlobalApplicationCommand(applicationId, commands) //
+                .doOnNext(cmd -> log.info("Successfully registered Global Command {}", cmd.name())).doOnError(e -> log.error("Failed to register global commands", e)).subscribe();
     }
 
     /* The two below methods are boilerplate that can be completely removed when using Spring Boot */

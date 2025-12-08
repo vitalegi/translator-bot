@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-    <changeSet id="v1-01-003" author="vitalegi">
+    <changeSet id="v1-01-001" author="vitalegi">
         <createTable tableName="message_translation">
             <column name="message_translation_id" type="uuid">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="message_translation_pk"/>
@@ -73,6 +73,8 @@
             <column name="name" type="varchar(500)">
                 <constraints nullable="false"/>
             </column>
+            <column name="monthly_max_total_characters" type="bigint" />
+            <column name="monthly_max_total_characters_per_user" type="bigint" />
             <column name="creation_date" type="timestamp without time zone">
                 <constraints nullable="true"/>
             </column>
@@ -255,5 +257,23 @@
                                  referencedTableName="discord_server_user"
                                  referencedColumnNames="discord_server_user_id"
         />
+    </changeSet>
+
+    <changeSet id="v1-01-060" author="vitalegi">
+        <createTable tableName="discord_server_whitelist">
+            <column name="discord_server_id" type="varchar(100)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="discord_server_whitelist_pk"/>
+            </column>
+            <column name="allowed" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(500)" />
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_update" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
     </changeSet>
 </databaseChangeLog>

@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -19,6 +21,10 @@ public class DiscordBot {
 
     OnChatInputInteraction onChatInputInteraction;
 
+    public static Scheduler scheduler() {
+        return Schedulers.boundedElastic();
+    }
+
     public DiscordBot(OnMessageCreate onMessageCreate, OnChatInputInteraction onChatInputInteraction, @Value("${DISCORD_TOKEN}") String token) {
         this.onMessageCreate = onMessageCreate;
         log.info("Create client");
@@ -26,7 +32,15 @@ public class DiscordBot {
         log.info("Client created");
 
         client.withGateway((gateway) -> {
-            new GlobalCommandsRegister(gateway.getRestClient()).registerCommands(List.of("discord-server.json", "whoami.json"));
+            new GlobalCommandsRegister(gateway.getRestClient()).registerCommands(List.of( //
+                            "add-server.json", //
+                            "enable-server.json", //
+                            "disable-server.json", //
+                            "config-server.json", //
+                            "whoami.json", //
+                            "info.json" //
+                    ) //
+            );
             var readyHandler = gateway.on(ReadyEvent.class, e -> Mono.fromRunnable(() -> {
                 var user = e.getSelf();
                 log.info("User: {} - {}", user.getUsername(), user.getId());

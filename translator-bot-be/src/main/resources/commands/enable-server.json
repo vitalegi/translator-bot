@@ -1,0 +1,13 @@
+{
+  "name": "enable-server",
+  "type": 1,
+  "description": "Enables server",
+  "options": [
+    {
+      "name": "server_id",
+      "description": "Server ID",
+      "type": 3,
+      "required": "true"
+    }
+  ]
+}

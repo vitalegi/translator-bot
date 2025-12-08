@@ -1,0 +1,6 @@
+{
+  "name": "info",
+  "type": 1,
+  "description": "Get info on servers",
+  "options": []
+}

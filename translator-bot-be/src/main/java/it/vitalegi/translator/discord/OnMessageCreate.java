@@ -77,7 +77,7 @@ public class OnMessageCreate {
 
     protected Mono<Long> getUsedQuota() {
         return Mono.fromCallable(this::getUsedQuotaBlocking) //
-                .subscribeOn(scheduler());
+                .subscribeOn(DiscordBot.scheduler());
     }
 
     protected long getUsedQuotaBlocking() {
@@ -123,7 +123,7 @@ public class OnMessageCreate {
 
     protected Mono<String> computeTranslation(Guild guild, String messageAuthor, String sourceLanguage, String targetLanguage, String message) {
         return Mono.fromCallable(() -> computeTranslationBlocking(guild, messageAuthor, sourceLanguage, targetLanguage, message)) //
-                .subscribeOn(scheduler());
+                .subscribeOn(DiscordBot.scheduler());
     }
 
     protected String computeTranslationBlocking(Guild guild, String messageAuthor, String sourceLanguage, String targetLanguage, String message) {
@@ -192,9 +192,5 @@ public class OnMessageCreate {
             return entity.getId().asString();
         }
         return null;
-    }
-
-    protected Scheduler scheduler() {
-        return Schedulers.boundedElastic();
     }
 }

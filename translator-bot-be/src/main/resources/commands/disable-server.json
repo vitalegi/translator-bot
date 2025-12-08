@@ -1,0 +1,13 @@
+{
+  "name": "disable-server",
+  "type": 1,
+  "description": "Disable server, stop translation feature",
+  "options": [
+    {
+      "name": "server_id",
+      "description": "Server ID",
+      "type": 3,
+      "required": "true"
+    }
+  ]
+}

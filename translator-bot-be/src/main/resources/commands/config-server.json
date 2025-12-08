@@ -1,0 +1,25 @@
+{
+  "name": "config-server",
+  "type": 1,
+  "description": "Enables server",
+  "options": [
+    {
+      "name": "server_id",
+      "description": "Server ID",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "month_max_tot_chars",
+      "description": "Max number of characters allowed per month (default 100.000)",
+      "type": 4,
+      "required": "false"
+    },
+    {
+      "name": "month_max_tot_chars_x_user",
+      "description": "Max number of characters allowed per user per month (default 50.000)",
+      "type": 4,
+      "required": "false"
+    }
+  ]
+}
