@@ -1,5 +1,11 @@
 # README
 
+## Supported languages & Cost
+
+<https://docs.aws.amazon.com/translate/latest/dg/what-is-languages.html>
+
+<https://aws.amazon.com/it/translate/pricing/>
+
 ## Prerequisites
 
 - JDK 17

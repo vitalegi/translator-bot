@@ -1,0 +1,43 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
+
+    <changeSet id="v1-01-003" author="vitalegi">
+        <createTable tableName="message_translation">
+            <column name="id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_language" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_language" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_message" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_message" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_length" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_length" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hits" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_update" type="timestamp without time zone">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
