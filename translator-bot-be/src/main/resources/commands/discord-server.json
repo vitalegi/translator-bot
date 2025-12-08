@@ -1,0 +1,34 @@
+{
+  "name": "discord-server",
+  "type": 1,
+  "description": "Discord Server management",
+  "options": [
+    {
+      "name": "server_id",
+      "description": "The server ID",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "action",
+      "description": "Action type",
+      "type": 3,
+      "required": "true",
+      "choices": [
+        {
+          "name": "Add",
+          "value": "add"
+        },
+        {
+          "name": "Remove",
+          "value": "remove"
+        },
+        {
+          "name": "Status",
+          "value": "status"
+        }
+      ]
+    }
+
+  ]
+}
