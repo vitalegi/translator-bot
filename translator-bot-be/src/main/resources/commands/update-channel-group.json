@@ -1,0 +1,19 @@
+{
+  "name": "update-channel-group",
+  "type": 1,
+  "description": "Update channel group",
+  "options": [
+    {
+      "name": "channel_group_id",
+      "description": "Channel group ID",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "name",
+      "description": "Channel group name",
+      "type": 3,
+      "required": "true"
+    }
+  ]
+}

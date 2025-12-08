@@ -1,0 +1,13 @@
+{
+  "name": "add-channel-group",
+  "type": 1,
+  "description": "Add new channel group",
+  "options": [
+    {
+      "name": "name",
+      "description": "Channel group name",
+      "type": 3,
+      "required": "true"
+    }
+  ]
+}

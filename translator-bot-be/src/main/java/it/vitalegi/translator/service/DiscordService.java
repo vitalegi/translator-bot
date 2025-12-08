@@ -2,6 +2,7 @@ package it.vitalegi.translator.service;
 
 import it.vitalegi.translator.entity.DiscordServerEntity;
 import it.vitalegi.translator.entity.DiscordServerWhitelistEntity;
+import it.vitalegi.translator.entity.ServerChannelGroupEntity;
 import it.vitalegi.translator.repository.DiscordServerChannelLanguageRepository;
 import it.vitalegi.translator.repository.DiscordServerRepository;
 import it.vitalegi.translator.repository.DiscordServerUserMessageRepository;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -28,6 +30,22 @@ public class DiscordService {
     DiscordServerUserRepository discordServerUserRepository;
     DiscordServerWhitelistRepository discordServerWhitelistRepository;
     ServerChannelGroupRepository serverChannelGroupRepository;
+
+    public ServerChannelGroupEntity addChannelGroup(String name) {
+        var entity = new ServerChannelGroupEntity();
+        entity.setName(name);
+        entity.setCreationDate(now());
+        entity.setLastUpdate(now());
+        return serverChannelGroupRepository.save(entity);
+    }
+
+    @Transactional
+    public ServerChannelGroupEntity updateChannelGroup(UUID id, String name) {
+        var entity = serverChannelGroupRepository.findById(id).get();
+        entity.setName(name);
+        entity.setLastUpdate(now());
+        return serverChannelGroupRepository.save(entity);
+    }
 
     @Transactional
     public String addServer(String serverId, String name) {
