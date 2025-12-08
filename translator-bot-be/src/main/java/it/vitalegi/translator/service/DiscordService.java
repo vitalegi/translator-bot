@@ -1,5 +1,6 @@
 package it.vitalegi.translator.service;
 
+import it.vitalegi.translator.entity.DiscordServerChannelLanguageEntity;
 import it.vitalegi.translator.entity.DiscordServerEntity;
 import it.vitalegi.translator.entity.DiscordServerWhitelistEntity;
 import it.vitalegi.translator.entity.ServerChannelGroupEntity;
@@ -69,6 +70,29 @@ public class DiscordService {
         entity.setMonthlyMaxTotalCharactersPerUser(monthlyMaxTotalCharactersPerUser);
         entity.setLastUpdate(now());
         return discordServerRepository.save(entity);
+    }
+
+    @Transactional
+    public DiscordServerChannelLanguageEntity addDiscordServerChannelLanguage(String channelGroupName, String serverId, String channel, String language) {
+        var entity = new DiscordServerChannelLanguageEntity();
+        entity.setDiscordServer(discordServerRepository.findById(serverId).get());
+        entity.setServerChannelGroup(serverChannelGroupRepository.findByName(channelGroupName));
+        entity.setChannelName(channel);
+        entity.setChannelSourceLanguage(language);
+        entity.setCreationDate(now());
+        entity.setLastUpdate(now());
+        return discordServerChannelLanguageRepository.save(entity);
+    }
+
+    @Transactional
+    public DiscordServerChannelLanguageEntity removeDiscordServerChannelLanguage(String channelGroupName, String serverId, String channel) {
+        var channelGroupId = serverChannelGroupRepository.findByName(channelGroupName).getServerChannelGroupId();
+        var entries = discordServerChannelLanguageRepository.findAllByServerId(serverId, channelGroupId);
+        var entity = entries.stream().filter(e -> e.getChannelName().equals(channel)).findFirst().orElse(null);
+        if (entity != null) {
+            discordServerChannelLanguageRepository.delete(entity);
+        }
+        return entity;
     }
 
     public String getInfo() {

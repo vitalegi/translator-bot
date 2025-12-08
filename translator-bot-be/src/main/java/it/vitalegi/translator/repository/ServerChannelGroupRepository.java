@@ -18,4 +18,6 @@ public interface ServerChannelGroupRepository extends JpaRepository<ServerChanne
             WHERE dscl.discordServer.discordServerId = :server_id
             """)
     List<ServerChannelGroupEntity> findAllByServerId(@Param("server_id") String serverId);
+
+    ServerChannelGroupEntity findByName(String name);
 }

@@ -1,0 +1,25 @@
+{
+  "name": "remove-discord-channel-language",
+  "type": 1,
+  "description": "Unlink channel from channel group",
+  "options": [
+    {
+      "name": "channel_group",
+      "description": "Channel group name",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "server_id",
+      "description": "Server ID",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "channel",
+      "description": "Channel name",
+      "type": 3,
+      "required": "true"
+    }
+  ]
+}

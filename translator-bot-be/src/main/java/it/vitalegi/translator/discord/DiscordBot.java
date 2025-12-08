@@ -39,6 +39,8 @@ public class DiscordBot {
                             "config-server.json", //
                             "add-channel-group.json", //
                             "update-channel-group.json", //
+                            "discord-channel-language-link.json", //
+                            "discord-channel-language-unlink.json", //
                             "whoami.json", //
                             "info.json" //
                     ) //

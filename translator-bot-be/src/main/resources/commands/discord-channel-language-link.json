@@ -1,0 +1,31 @@
+{
+  "name": "discord-channel-language-link",
+  "type": 1,
+  "description": "Link channel to channel group",
+  "options": [
+    {
+      "name": "channel_group",
+      "description": "Channel group name",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "server_id",
+      "description": "Server ID",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "channel",
+      "description": "Channel name",
+      "type": 3,
+      "required": "true"
+    },
+    {
+      "name": "language",
+      "description": "Language expected in the channel",
+      "type": 3,
+      "required": "true"
+    }
+  ]
+}
