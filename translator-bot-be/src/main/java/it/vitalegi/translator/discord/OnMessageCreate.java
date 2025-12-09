@@ -8,32 +8,34 @@ import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.Message;
 import discord4j.core.object.entity.channel.GuildChannel;
 import discord4j.core.object.entity.channel.TextChannel;
-import it.vitalegi.translator.entity.MessageTranslatorEntity;
+import it.vitalegi.translator.entity.DiscordServerChannelLanguageEntity;
+import it.vitalegi.translator.entity.DiscordServerUserEntity;
 import it.vitalegi.translator.integration.aws.translate.AwsTranslateImpl;
-import it.vitalegi.translator.repository.MessageTranslatorRepository;
 import it.vitalegi.translator.service.DiscordService;
 import it.vitalegi.translator.util.StringUtil;
-import it.vitalegi.translator.util.Tuple2;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class OnMessageCreate {
 
     AwsTranslateImpl awsTranslate;
-    MessageTranslatorRepository messageTranslatorRepository;
     DiscordService discordService;
+    int maxMessageLength;
+
+    public OnMessageCreate(AwsTranslateImpl awsTranslate, DiscordService discordService, @Value("${discord.maxMessageLength}") int maxMessageLength) {
+        this.awsTranslate = awsTranslate;
+        this.discordService = discordService;
+        this.maxMessageLength = maxMessageLength;
+    }
 
     public Flux<Message> onEvent(MessageCreateEvent e) {
         var msg = e.getMessage();
@@ -83,7 +85,7 @@ public class OnMessageCreate {
             log.error("Server {} ({}) used allowed quota. Allowed: {}, actual: {}", discordServerId, discordServer.getName(), serverQuota, usedQuota);
             return false;
         }
-        log.info("Server quota of {} ({}). allowed: {}, actual: {}", discordServerId, discordServer.getName(), serverQuota, usedQuota);
+        log.debug("Server quota of {} ({}). allowed: {}, actual: {}", discordServerId, discordServer.getName(), serverQuota, usedQuota);
 
         var userId = discordService.findDiscordServerUserId(discordServerId, discordUserId);
         if (userId != null) {
@@ -93,26 +95,32 @@ public class OnMessageCreate {
                 log.error("User {} in server {} ({}) used allowed quota. Allowed: {}, actual: {}", userId, discordServerId, discordServer.getName(), serverQuotaByUser, usedQuotaByUser);
                 return false;
             }
-            log.info("User server quota of {} - {} ({}). allowed: {}, actual: {}", userId, discordServerId, discordServer.getName(), serverQuotaByUser, usedQuotaByUser);
+            log.debug("User server quota of {} - {} ({}). allowed: {}, actual: {}", userId, discordServerId, discordServer.getName(), serverQuotaByUser, usedQuotaByUser);
         }
         return true;
     }
 
     protected Flux<Message> processTranslations(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String discordUserId, String discordUsername) {
         return DiscordBot.executeBlocking(() -> processTranslationsBlocking(msg, guild, guildChannels, messageChannelId, discordUserId, discordUsername)) //
-                .flatMapMany(Flux::fromIterable);
+                .flatMapMany(Flux::fromIterable) //
+                .flatMap(this::executeTranslation) //
+                .flatMap(response -> {
+                    var request = response.request();
+                    var message = formatOutputMessage(request.discordUsername(), request.sourceLanguage(), request.sourceMessage(), response.targetMessage());
+                    return request.targetChannel().createMessage(message);
+                });
     }
 
-    protected List<Message> processTranslationsBlocking(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String discordUserId, String discordUsername) {
-        log.info("Processing msg. messageChannelId={}, author={}/{}", messageChannelId, discordUserId, discordUsername);
+    protected List<TranslationMessageRequest> processTranslationsBlocking(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String discordUserId, String discordUsername) {
+        log.debug("Processing msg. messageChannelId={}, author={}/{}", messageChannelId, discordUserId, discordUsername);
 
         var discordServerId = getId(guild);
 
         var user = discordService.syncDiscordServerUser(discordServerId, discordUserId, discordUsername);
-        log.info("internal user={} <=> discord={} ({})", user.getDiscordServerUserId(), user.getUserId(), user.getUsername());
+        log.debug("internal user={} <=> discord={} ({})", user.getDiscordServerUserId(), user.getUserId(), user.getUsername());
 
         var messageChannelName = guildChannels.stream().filter(c -> getId(c).equals(messageChannelId)).map(GuildChannel::getName).findFirst().orElse(null);
-        log.info("DiscordServer={}, messageChannelName={}", discordServerId, messageChannelName);
+        log.debug("DiscordServer={}, messageChannelName={}", discordServerId, messageChannelName);
         var sourceLanguage = discordService.getDiscordServerChannelLanguage(discordServerId, messageChannelName);
         if (sourceLanguage == null) {
             log.info("Channel {} (server {}) is not monitored, skip", messageChannelName, discordServerId);
@@ -121,61 +129,53 @@ public class OnMessageCreate {
         var connectedEntries = discordService.getDiscordServerChannelGroupConnectedEntries(discordServerId, messageChannelName);
 
         return guildChannels.stream() //
-                .filter(channel -> !getId(channel).equals(messageChannelId)) //
-                .filter(channel -> channel instanceof TextChannel) //
-                .map(channel -> (TextChannel) channel) //
-                .map(channel -> {
-                    log.debug("Analyzing channel {}", channel.getName());
-                    var entry = connectedEntries.stream().filter(connected -> connected.getChannelName().equals(channel.getName())).findFirst().orElse(null);
-                    if (entry == null) {
-                        log.debug("Skip channel {}", channel.getName());
-                        return null;
-                    }
-                    return new Tuple2<>(channel, entry);
-                }) //
-                .filter(Objects::nonNull) //
-                .map(t -> {
-                    var targetChannel = t.getT1();
-                    var cfg = t.getT2();
-                    var targetLanguage = cfg.getChannelSourceLanguage();
-                    log.info("Translate message from {} (channel {}) to {} (channel {})", sourceLanguage, messageChannelName, targetLanguage, targetChannel.getName());
-                    var translation = computeTranslationBlocking(cfg.getServerChannelGroup().getServerChannelGroupId(), discordServerId, user.getDiscordServerUserId(), msg.getContent(), sourceLanguage, targetLanguage);
-                    return targetChannel.createMessage(formatOutputMessage(discordUsername, sourceLanguage, msg.getContent(), translation)).block();
-                }) //
+                .map(channel -> createTranslationMessageRequest(channel, messageChannelId, messageChannelName, sourceLanguage, discordServerId, user, msg, connectedEntries)).filter(Objects::nonNull) //
                 .toList();
+    }
+
+    protected TranslationMessageRequest createTranslationMessageRequest(GuildChannel guildChannel, String sourceChannelId, String sourceChannelName, String sourceLanguage, String discordServerId, DiscordServerUserEntity user, Message msg, List<DiscordServerChannelLanguageEntity> connectedEntries) {
+        if (getId(guildChannel).equals(sourceChannelId)) {
+            return null;
+        }
+        if (!(guildChannel instanceof TextChannel channel)) {
+            return null;
+        }
+        log.debug("Analyzing channel {}", channel.getName());
+        var entry = connectedEntries.stream().filter(connected -> connected.getChannelName().equals(channel.getName())).findFirst().orElse(null);
+        if (entry == null) {
+            log.debug("Skip channel {}", channel.getName());
+            return null;
+        }
+        return new TranslationMessageRequest(entry.getServerChannelGroup().getServerChannelGroupId(), discordServerId, user.getDiscordServerUserId(), user.getUsername(), msg.getContent(), sourceLanguage, sourceChannelName, entry.getChannelSourceLanguage(), channel);
+
+    }
+
+    protected Mono<TranslationMessagePayload> executeTranslation(TranslationMessageRequest request) {
+        return DiscordBot.executeBlocking(() -> {
+            var response = executeTranslationBlocking(request);
+            return new TranslationMessagePayload(request, response);
+        });
     }
 
     protected String formatOutputMessage(String author, String sourceLanguage, String sourceMessage, String targetMessage) {
         return "**" + author + "**: " + targetMessage + "\n--------------\n" + sourceLanguage + ": _" + sourceMessage + "_";
     }
 
-    protected String computeTranslationBlocking(UUID serverChannelGroupId, String discordServerId, UUID authorId, String message, String sourceLanguage, String targetLanguage) {
+    protected String executeTranslationBlocking(TranslationMessageRequest request) {
         var ts = System.currentTimeMillis();
-        // TODO move logic
-        if (message.length() > 1000) {
-            message = message.substring(0, 1000);
-        }
-        var targetMessage = awsTranslate.translate(sourceLanguage, targetLanguage, message);
-        log.info("Translation done in {}ms", (System.currentTimeMillis() - ts));
-        if (targetMessage.length() > 1000) {
-            targetMessage = targetMessage.substring(0, 1000);
+
+        var message = request.sourceMessage();
+        if (message.length() > maxMessageLength) {
+            message = message.substring(0, maxMessageLength);
         }
 
-        var entity = new MessageTranslatorEntity();
-        entity.setSourceLanguage(sourceLanguage);
-        entity.setTargetLanguage(targetLanguage);
-        entity.setSourceMessage(message);
-        entity.setTargetMessage(targetMessage);
-        entity.setSourceLength(message.length());
-        entity.setTargetLength(targetMessage.length());
-        entity.setHits(1);
-        entity.setCreationDate(Instant.now());
-        entity.setLastUpdate(Instant.now());
-        messageTranslatorRepository.save(entity);
+        var targetMessage = awsTranslate.translate(request.sourceLanguage(), request.targetLanguage(), message);
+        var time = (System.currentTimeMillis() - ts);
+        log.info("Translate message from {} (channel {}) to {} (channel {}) done in {}ms", request.sourceLanguage(), request.sourceChannelName(), request.targetLanguage(), request.targetChannel().getName(), time);
 
-        discordService.addDiscordServerUserMessage(sourceLanguage, targetLanguage, message.length(), targetMessage.length(), serverChannelGroupId, discordServerId, authorId);
+        discordService.addDiscordServerUserMessage(request.sourceLanguage(), request.targetLanguage(), message.length(), targetMessage.length(), request.serverChannelGroupId(), request.discordServerId(), request.discordServerUserId());
 
-        log.info("computeTranslationBlocking done in {}ms", (System.currentTimeMillis() - ts));
+        log.info("executeTranslationBlocking done in {}ms", (System.currentTimeMillis() - ts));
         return targetMessage;
     }
 

@@ -5,49 +5,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
 
-    <changeSet id="v1-01-001" author="vitalegi">
-        <createTable tableName="message_translation">
-            <column name="message_translation_id" type="uuid">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="message_translation_pk"/>
-            </column>
-            <column name="source_language" type="varchar(10)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="target_language" type="varchar(10)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="source_message" type="varchar(2000)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="target_message" type="varchar(2000)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="source_length" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="target_length" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="hits" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="creation_date" type="timestamp without time zone">
-                <constraints nullable="true"/>
-            </column>
-            <column name="last_update" type="timestamp without time zone">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-    </changeSet>
-
-    <changeSet id="v1-01-004" author="vitalegi">
-        <createIndex indexName="ix_message_translation_msg" tableName="message_translation">
-            <column name="source_language"/>
-            <column name="target_language"/>
-            <column name="source_message"/>
-        </createIndex>
-    </changeSet>
-
     <changeSet id="v1-01-010" author="vitalegi">
         <createTable tableName="server_channel_group">
             <column name="server_channel_group_id" type="uuid">
@@ -73,8 +30,8 @@
             <column name="name" type="varchar(500)">
                 <constraints nullable="false"/>
             </column>
-            <column name="monthly_max_total_characters" type="bigint" />
-            <column name="monthly_max_total_characters_per_user" type="bigint" />
+            <column name="monthly_max_total_characters" type="bigint"/>
+            <column name="monthly_max_total_characters_per_user" type="bigint"/>
             <column name="creation_date" type="timestamp without time zone">
                 <constraints nullable="true"/>
             </column>
@@ -267,7 +224,7 @@
             <column name="allowed" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="description" type="varchar(500)" />
+            <column name="description" type="varchar(500)"/>
             <column name="creation_date" type="timestamp without time zone">
                 <constraints nullable="true"/>
             </column>

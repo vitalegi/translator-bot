@@ -102,3 +102,4 @@ logging.level:
 discord:
   superAdminIds:
     - 1286613721421971559
+  maxMessageLength: 1000

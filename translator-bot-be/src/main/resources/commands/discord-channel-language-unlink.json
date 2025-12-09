@@ -1,5 +1,5 @@
 {
-  "name": "remove-discord-channel-language",
+  "name": "discord-channel-language-unlink",
   "type": 1,
   "description": "Unlink channel from channel group",
   "options": [
