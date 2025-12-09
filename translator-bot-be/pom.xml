@@ -10,7 +10,7 @@
     </parent>
     <groupId>it.vitalegi</groupId>
     <artifactId>translator</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>translator-bot-be</name>
     <description>Translator Bot BE</description>
     <url/>
