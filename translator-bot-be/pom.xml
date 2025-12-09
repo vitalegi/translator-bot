@@ -29,7 +29,7 @@
     <properties>
         <java.version>17</java.version>
         <lombok.version>1.18.42</lombok.version>
-        <amazon.version>2.40.3</amazon.version>
+        <amazon.version>2.40.4</amazon.version>
         <testcontainers.version>1.21.3</testcontainers.version>
         <httpclient5.version>5.5</httpclient5.version>
     </properties>
