@@ -15,7 +15,7 @@ public class DiscordConfiguration {
 
     @Bean
     DiscordBot discordBot(OnMessageCreate onMessageCreate, OnChatInputInteraction onChatInputInteraction, @Value("${DISCORD_TOKEN}") String token) {
-        var bot = new DiscordBotImpl(onMessageCreate, onChatInputInteraction, token);
+        var bot = new DiscordBotImpl(onMessageCreate, onChatInputInteraction, token, "./commands");
         bot.init();
         return bot;
     }

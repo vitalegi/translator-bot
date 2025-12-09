@@ -7,30 +7,26 @@ import discord4j.rest.RestClient;
 import discord4j.rest.service.ApplicationService;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class GlobalCommandsRegister {
 
     private final RestClient restClient;
 
-    // The name of the folder the commands json is in, inside our resources folder
-    private static final String commandsFolderName = "commands/";
+    private final String commandsDirectory;
 
-    public GlobalCommandsRegister(RestClient restClient) {
+    public GlobalCommandsRegister(RestClient restClient, String commandsDirectory) {
         this.restClient = restClient;
+        this.commandsDirectory = commandsDirectory;
     }
 
     //Since this will only run once on startup, blocking is okay.
-    protected void registerCommands(List<String> fileNames) {
+    protected void registerCommands() {
         //Create an ObjectMapper that supports Discord4J classes
         final JacksonResources d4jMapper = JacksonResources.create();
 
@@ -40,7 +36,7 @@ public class GlobalCommandsRegister {
 
         //Get our commands json from resources as command data
         List<ApplicationCommandRequest> commands = new ArrayList<>();
-        for (String json : getCommandsJson(fileNames)) {
+        for (String json : getCommandsJson()) {
             ApplicationCommandRequest request = null;
             try {
                 request = d4jMapper.getObjectMapper().readValue(json, ApplicationCommandRequest.class);
@@ -58,35 +54,27 @@ public class GlobalCommandsRegister {
                 .doOnNext(cmd -> log.info("Successfully registered Global Command {}", cmd.name())).doOnError(e -> log.error("Failed to register global commands", e)).subscribe();
     }
 
-    /* The two below methods are boilerplate that can be completely removed when using Spring Boot */
+    private List<String> getCommandsJson() {
+        var paths = getFiles();
 
-    private static List<String> getCommandsJson(List<String> fileNames) {
-        // Confirm that the commands folder exists
-        URL url = GlobalCommandsRegister.class.getClassLoader().getResource(commandsFolderName);
-        Objects.requireNonNull(url, commandsFolderName + " could not be found");
-
-        //Get all the files inside this folder and return the contents of the files as a list of strings
-        List<String> list = new ArrayList<>();
-        for (String file : fileNames) {
-            String resourceFileAsString = getResourceFileAsString(commandsFolderName + file);
-            list.add(Objects.requireNonNull(resourceFileAsString, "Command file not found: " + file));
+        if (paths.isEmpty()) {
+            throw new IllegalArgumentException("No command found in " + commandsDirectory);
         }
-        return list;
+        return paths.stream().map(this::getFileContent).toList();
     }
 
-    /**
-     * Gets a specific resource file as String
-     *
-     * @param fileName The file path omitting "resources/"
-     * @return The contents of the file as a String, otherwise throws an exception
-     */
-    private static String getResourceFileAsString(String fileName) {
-        ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-        try (InputStream resourceAsStream = classLoader.getResourceAsStream(fileName)) {
-            if (resourceAsStream == null) return null;
-            try (InputStreamReader inputStreamReader = new InputStreamReader(resourceAsStream); BufferedReader reader = new BufferedReader(inputStreamReader)) {
-                return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-            }
+    private List<Path> getFiles() {
+        try (var s = Files.walk(Path.of(commandsDirectory))) {
+            return s.filter(p -> p.getFileName().toString().endsWith(".json")) //
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getFileContent(Path path) {
+        try {
+            return String.join("\n", Files.readAllLines(path));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

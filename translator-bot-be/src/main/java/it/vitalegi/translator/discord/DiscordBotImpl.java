@@ -10,7 +10,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.List;
 import java.util.concurrent.Callable;
 
 @Slf4j
@@ -19,6 +18,7 @@ public class DiscordBotImpl implements DiscordBot {
     private final OnMessageCreate onMessageCreate;
     private final OnChatInputInteraction onChatInputInteraction;
     private final String token;
+    private final String commandsDir;
 
     public static Scheduler scheduler() {
         return Schedulers.boundedElastic();
@@ -30,10 +30,11 @@ public class DiscordBotImpl implements DiscordBot {
                 .subscribeOn(DiscordBotImpl.scheduler());
     }
 
-    public DiscordBotImpl(OnMessageCreate onMessageCreate, OnChatInputInteraction onChatInputInteraction, @Value("${DISCORD_TOKEN}") String token) {
+    public DiscordBotImpl(OnMessageCreate onMessageCreate, OnChatInputInteraction onChatInputInteraction, @Value("${DISCORD_TOKEN}") String token, @Value("${discord.commandsDir}") String commandsDir) {
         this.onMessageCreate = onMessageCreate;
         this.onChatInputInteraction = onChatInputInteraction;
         this.token = token;
+        this.commandsDir = commandsDir;
     }
 
     public void init() {
@@ -42,20 +43,7 @@ public class DiscordBotImpl implements DiscordBot {
         log.info("Client created");
 
         client.withGateway((gateway) -> {
-            new GlobalCommandsRegister(gateway.getRestClient()).registerCommands(List.of( //
-                            "add-server.json", //
-                            "enable-server.json", //
-                            "disable-server.json", //
-                            "disable-servers.json", //
-                            "config-server.json", //
-                            "add-channel-group.json", //
-                            "update-channel-group.json", //
-                            "discord-channel-language-link.json", //
-                            "discord-channel-language-unlink.json", //
-                            "whoami.json", //
-                            "info.json" //
-                    ) //
-            );
+            new GlobalCommandsRegister(gateway.getRestClient(), commandsDir).registerCommands();
             var readyHandler = gateway.on(ReadyEvent.class, e -> Mono.fromRunnable(() -> {
                 var user = e.getSelf();
                 log.info("User: {} - {}", user.getUsername(), user.getId());
