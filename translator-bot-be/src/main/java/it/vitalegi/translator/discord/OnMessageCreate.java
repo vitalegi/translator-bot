@@ -1,5 +1,6 @@
 package it.vitalegi.translator.discord;
 
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Entity;
 import discord4j.core.object.entity.Guild;
@@ -54,17 +55,15 @@ public class OnMessageCreate {
         var channel = msg.getChannel().block();
         var channelId = getId(channel);
 
-        // TODO ignore message if channel is not registered
-
-        // TODO ignore message if user sent too many messages
-
-        return precheck(discordServerId, discordServerName) //
-                .flatMapMany(valid -> getChannels(guild).zipWith(getUsername(msg)) //
-                        .flatMapMany((tuple) -> processTranslations(msg, guild, tuple.getT1(), channelId, tuple.getT2())));
+        return getDiscordUserId(msg) //
+                .zipWith(getUsername(msg)) //
+                .flatMapMany(author -> precheck(discordServerId, discordServerName, author.getT1()) //
+                        .flatMap(valid -> getChannels(guild)) //
+                        .flatMapMany(channels -> processTranslations(msg, guild, channels, channelId, author.getT1(), author.getT2())));
     }
 
-    protected Mono<Boolean> precheck(String discordServerId, String serverName) {
-        return DiscordBot.executeBlocking(() -> precheckBlocking(discordServerId, serverName)).flatMap(allowed -> {
+    protected Mono<Boolean> precheck(String discordServerId, String serverName, String discordUserId) {
+        return DiscordBot.executeBlocking(() -> precheckBlocking(discordServerId, serverName, discordUserId)).flatMap(allowed -> {
             if (allowed) {
                 return Mono.just(true);
             }
@@ -72,7 +71,7 @@ public class OnMessageCreate {
         });
     }
 
-    protected boolean precheckBlocking(String discordServerId, String serverName) {
+    protected boolean precheckBlocking(String discordServerId, String serverName, String discordUserId) {
         if (!discordService.isServerAllowed(discordServerId)) {
             log.error("Server {} ({}) not allowed", discordServerId, serverName);
             return false;
@@ -85,22 +84,33 @@ public class OnMessageCreate {
             return false;
         }
         log.info("Server quota of {} ({}). allowed: {}, actual: {}", discordServerId, discordServer.getName(), serverQuota, usedQuota);
+
+        var userId = discordService.findDiscordServerUserId(discordServerId, discordUserId);
+        if (userId != null) {
+            var usedQuotaByUser = discordService.getServerUsedMonthlyQuotaByUser(discordServerId, userId);
+            var serverQuotaByUser = discordServer.getMonthlyMaxTotalCharactersPerUser();
+            if (usedQuotaByUser > serverQuotaByUser) {
+                log.error("User {} in server {} ({}) used allowed quota. Allowed: {}, actual: {}", userId, discordServerId, discordServer.getName(), serverQuotaByUser, usedQuotaByUser);
+                return false;
+            }
+            log.info("User server quota of {} - {} ({}). allowed: {}, actual: {}", userId, discordServerId, discordServer.getName(), serverQuotaByUser, usedQuotaByUser);
+        }
         return true;
     }
 
-    protected Flux<Message> processTranslations(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String messageAuthor) {
-        return DiscordBot.executeBlocking(() -> processTranslationsBlocking(msg, guild, guildChannels, messageChannelId, messageAuthor)) //
+    protected Flux<Message> processTranslations(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String discordUserId, String discordUsername) {
+        return DiscordBot.executeBlocking(() -> processTranslationsBlocking(msg, guild, guildChannels, messageChannelId, discordUserId, discordUsername)) //
                 .flatMapMany(Flux::fromIterable);
     }
 
-    protected List<Message> processTranslationsBlocking(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String messageAuthor) {
-        log.info("Processing msg. messageChannelId={}, author={}", messageChannelId, messageAuthor);
+    protected List<Message> processTranslationsBlocking(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String discordUserId, String discordUsername) {
+        log.info("Processing msg. messageChannelId={}, author={}/{}", messageChannelId, discordUserId, discordUsername);
 
         var discordServerId = getId(guild);
 
-        var authorDiscordId = msg.getAuthorAsMember().block().getId().asString();
-        var user = discordService.syncDiscordServerUser(discordServerId, authorDiscordId, getUsername(msg).block());
+        var user = discordService.syncDiscordServerUser(discordServerId, discordUserId, discordUsername);
         log.info("internal user={} <=> discord={} ({})", user.getDiscordServerUserId(), user.getUserId(), user.getUsername());
+
         var messageChannelName = guildChannels.stream().filter(c -> getId(c).equals(messageChannelId)).map(GuildChannel::getName).findFirst().orElse(null);
         log.info("DiscordServer={}, messageChannelName={}", discordServerId, messageChannelName);
         var sourceLanguage = discordService.getDiscordServerChannelLanguage(discordServerId, messageChannelName);
@@ -130,7 +140,7 @@ public class OnMessageCreate {
                     var targetLanguage = cfg.getChannelSourceLanguage();
                     log.info("Translate message from {} (channel {}) to {} (channel {})", sourceLanguage, messageChannelName, targetLanguage, targetChannel.getName());
                     var translation = computeTranslationBlocking(cfg.getServerChannelGroup().getServerChannelGroupId(), discordServerId, user.getDiscordServerUserId(), msg.getContent(), sourceLanguage, targetLanguage);
-                    return targetChannel.createMessage(formatOutputMessage(messageAuthor, sourceLanguage, msg.getContent(), translation)).block();
+                    return targetChannel.createMessage(formatOutputMessage(discordUsername, sourceLanguage, msg.getContent(), translation)).block();
                 }) //
                 .toList();
     }
@@ -171,6 +181,10 @@ public class OnMessageCreate {
 
     protected Mono<List<GuildChannel>> getChannels(Guild guild) {
         return guild.getChannels().collectList();
+    }
+
+    protected Mono<String> getDiscordUserId(Message message) {
+        return message.getAuthorAsMember().map(Member::getId).map(Snowflake::asString);
     }
 
     protected Mono<String> getUsername(Message message) {

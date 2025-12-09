@@ -102,11 +102,3 @@ logging.level:
 discord:
   superAdminIds:
     - 1286613721421971559
-
-translator:
-  allowed-server: 1445887902385963110
-  max-total-characters: 10000
-  channels:
-    offtopic-en: en
-    offtopic-it: it
-    offtopic-ko: ko

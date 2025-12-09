@@ -23,6 +23,15 @@ public interface DiscordServerUserMessageRepository extends JpaRepository<Discor
     Long getTotalSourceLength(@Param("from_date") Instant fromDate, @Param("server_id") String serverId);
 
     @Query("""
+    SELECT SUM(dsum.sourceLength)
+    FROM discord_server_user_message dsum
+    WHERE dsum.creationDate >= :from_date
+        AND dsum.discordServer.discordServerId = :server_id
+        AND dsum.discordServerUser.discordServerUserId = :discord_server_user_id
+    """)
+    Long getTotalSourceLength(@Param("from_date") Instant fromDate, @Param("server_id") String serverId, @Param("discord_server_user_id") UUID discordServerUserId);
+
+    @Query("""
     SELECT COUNT(dsum.discordServerUserMessageId)
     FROM discord_server_user_message dsum
     WHERE dsum.creationDate >= :from_date

@@ -141,9 +141,12 @@ public class DiscordService {
     }
 
     public Long getServerUsedMonthlyQuota(String discordServerId) {
-        var today = LocalDate.now();
-        var from = LocalDate.of(today.getYear(), today.getMonth(), 1).atStartOfDay(ZoneId.of("UTC")).toInstant();
-        var usedQuota = discordServerUserMessageRepository.getTotalSourceLength(from, discordServerId);
+        var usedQuota = discordServerUserMessageRepository.getTotalSourceLength(getStartOfCurrentMonth(), discordServerId);
+        return usedQuota != null ? usedQuota : 0L;
+    }
+
+    public Long getServerUsedMonthlyQuotaByUser(String discordServerId, UUID userId) {
+        var usedQuota = discordServerUserMessageRepository.getTotalSourceLength(getStartOfCurrentMonth(), discordServerId, userId);
         return usedQuota != null ? usedQuota : 0L;
     }
 
@@ -151,8 +154,7 @@ public class DiscordService {
         var sb = new StringBuilder();
         var servers = discordServerRepository.findAll();
         servers.sort(Comparator.comparing(DiscordServerEntity::getName));
-        var today = LocalDate.now();
-        var from = LocalDate.of(today.getYear(), today.getMonth(), 1).atStartOfDay(ZoneId.of("UTC")).toInstant();
+        var from = getStartOfCurrentMonth();
         for (var server : servers) {
             var totalSourceCharacters = getServerUsedMonthlyQuota(server.getDiscordServerId());
             var totalMessagesCount = discordServerUserMessageRepository.getTotalMessagesCount(from, server.getDiscordServerId());
@@ -218,6 +220,14 @@ public class DiscordService {
         return discordServerUserRepository.save(entity);
     }
 
+    public UUID findDiscordServerUserId(String discordServerId, String discordUserId) {
+        var entity = discordServerUserRepository.findByDiscordServerIdAndUserId(discordServerId, discordUserId);
+        if (entity == null) {
+            return null;
+        }
+        return entity.getDiscordServerUserId();
+    }
+
     protected DiscordServerEntity addDiscordServer(String serverId, String name, long monthlyMaxTotalCharacters, long monthlyMaxTotalCharactersPerUser) {
         var entity = new DiscordServerEntity();
         entity.setDiscordServerId(serverId);
@@ -241,5 +251,10 @@ public class DiscordService {
 
     private Instant now() {
         return Instant.now();
+    }
+
+    protected Instant getStartOfCurrentMonth() {
+        var today = LocalDate.now();
+        return LocalDate.of(today.getYear(), today.getMonth(), 1).atStartOfDay(ZoneId.of("UTC")).toInstant();
     }
 }
