@@ -9,3 +9,7 @@ updates:
     directory: "/translator-bot-be" # Location of package manifests
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/translator-bot-website" # Location of package manifests
+    schedule:
+      interval: "weekly"
