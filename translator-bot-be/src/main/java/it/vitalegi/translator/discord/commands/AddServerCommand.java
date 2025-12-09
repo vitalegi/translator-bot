@@ -2,7 +2,7 @@ package it.vitalegi.translator.discord.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import it.vitalegi.translator.discord.CommandHandler;
-import it.vitalegi.translator.discord.DiscordBot;
+import it.vitalegi.translator.discord.DiscordBotImpl;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
 import it.vitalegi.translator.discord.service.DiscordPermissionService;
 import it.vitalegi.translator.service.DiscordService;
@@ -33,6 +33,6 @@ public class AddServerCommand implements CommandHandler {
 
         log.info("user {}, add_server {} {}", userId, serverId, name);
 
-        return DiscordBot.executeBlocking(() -> discordService.addServer(serverId, name)).flatMap(o -> e.reply("Successfully updated server"));
+        return DiscordBotImpl.executeBlocking(() -> discordService.addServer(serverId, name)).flatMap(o -> e.reply("Successfully updated server"));
     }
 }

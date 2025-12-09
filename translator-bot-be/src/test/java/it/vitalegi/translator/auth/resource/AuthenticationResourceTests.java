@@ -1,5 +1,7 @@
 package it.vitalegi.translator.auth.resource;
 
+import it.vitalegi.translator.App;
+import it.vitalegi.translator.config.DiscordConfigurationTests;
 import it.vitalegi.translator.util.MockAuth;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(classes = {App.class, DiscordConfigurationTests.class})
 @AutoConfigureMockMvc
 @Slf4j
 @ActiveProfiles("test")
@@ -55,7 +57,7 @@ public class AuthenticationResourceTests {
             mockMvc.perform(get("/auth/permissions").contentType(MediaType.APPLICATION_JSON).with(csrf()).with(auth)) //
                     .andDo(print()) //
                     .andExpect(status().isOk()) //
-                    .andExpect(content().json("{'permissions': ['READ_MEDIA', 'MANAGE_SCRAPER', 'MANAGE_SYNC', 'EPISODE_MANUAL_UPLOAD']}")) //
+                    .andExpect(content().json("{'permissions': ['ADMIN']}")) //
                     .andReturn();
         }
 

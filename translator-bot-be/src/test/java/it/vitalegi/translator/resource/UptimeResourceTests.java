@@ -1,6 +1,7 @@
 package it.vitalegi.translator.resource;
 
 import it.vitalegi.translator.App;
+import it.vitalegi.translator.config.DiscordConfigurationTests;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(classes = {App.class, DiscordConfigurationTests.class})
 @AutoConfigureMockMvc
 @Slf4j
 @ActiveProfiles("test")

@@ -65,7 +65,7 @@ public class OnMessageCreate {
     }
 
     protected Mono<Boolean> precheck(String discordServerId, String serverName, String discordUserId) {
-        return DiscordBot.executeBlocking(() -> precheckBlocking(discordServerId, serverName, discordUserId)).flatMap(allowed -> {
+        return DiscordBotImpl.executeBlocking(() -> precheckBlocking(discordServerId, serverName, discordUserId)).flatMap(allowed -> {
             if (allowed) {
                 return Mono.just(true);
             }
@@ -101,7 +101,7 @@ public class OnMessageCreate {
     }
 
     protected Flux<Message> processTranslations(Message msg, Guild guild, List<GuildChannel> guildChannels, String messageChannelId, String discordUserId, String discordUsername) {
-        return DiscordBot.executeBlocking(() -> processTranslationsBlocking(msg, guild, guildChannels, messageChannelId, discordUserId, discordUsername)) //
+        return DiscordBotImpl.executeBlocking(() -> processTranslationsBlocking(msg, guild, guildChannels, messageChannelId, discordUserId, discordUsername)) //
                 .flatMapMany(Flux::fromIterable) //
                 .flatMap(this::executeTranslation) //
                 .flatMap(response -> {
@@ -151,7 +151,7 @@ public class OnMessageCreate {
     }
 
     protected Mono<TranslationMessagePayload> executeTranslation(TranslationMessageRequest request) {
-        return DiscordBot.executeBlocking(() -> {
+        return DiscordBotImpl.executeBlocking(() -> {
             var response = executeTranslationBlocking(request);
             return new TranslationMessagePayload(request, response);
         });

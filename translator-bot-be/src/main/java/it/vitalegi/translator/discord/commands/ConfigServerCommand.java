@@ -1,9 +1,8 @@
 package it.vitalegi.translator.discord.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono;
 import it.vitalegi.translator.discord.CommandHandler;
-import it.vitalegi.translator.discord.DiscordBot;
+import it.vitalegi.translator.discord.DiscordBotImpl;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
 import it.vitalegi.translator.discord.service.DiscordPermissionService;
 import it.vitalegi.translator.service.DiscordService;
@@ -35,7 +34,7 @@ public class ConfigServerCommand implements CommandHandler {
         var userId = e.getUser().getId().asString();
 
         log.info("user {}, config_server {}, max={}, per_user={}", userId, serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser);
-        return DiscordBot.executeBlocking(() -> discordService.updateDiscordServerLimits(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser))
+        return DiscordBotImpl.executeBlocking(() -> discordService.updateDiscordServerLimits(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser))
                 .flatMap(out -> e.reply("Successfully updated server"));
     }
 }

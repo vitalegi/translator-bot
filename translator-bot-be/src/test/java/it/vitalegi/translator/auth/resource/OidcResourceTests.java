@@ -2,6 +2,8 @@ package it.vitalegi.translator.auth.resource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.vitalegi.translator.App;
+import it.vitalegi.translator.config.DiscordConfigurationTests;
 import it.vitalegi.translator.integration.oidc.CognitoService;
 import it.vitalegi.translator.integration.oidc.model.CognitoOidcResponse;
 import it.vitalegi.translator.auth.model.OidcTokenResponse;
@@ -32,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(classes = {App.class, DiscordConfigurationTests.class})
 @AutoConfigureMockMvc
 @Slf4j
 @ActiveProfiles("test")

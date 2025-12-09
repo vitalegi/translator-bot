@@ -17,6 +17,7 @@ public class TestContainersElements {
         System.setProperty("AWS_ACCESS_KEY_ID", S3.getAccessKey());
         System.setProperty("AWS_SECRET_ACCESS_KEY", S3.getSecretKey());
         System.setProperty("AWS_BUCKET", "test-bucket");
+        System.setProperty("DISCORD_TOKEN", "test-token");
         log.info("S3 TestContainers instances started in {}ms", System.currentTimeMillis() - start);
     }
 
@@ -27,6 +28,7 @@ public class TestContainersElements {
         System.clearProperty("AWS_ACCESS_KEY_ID");
         System.clearProperty("AWS_SECRET_ACCESS_KEY");
         System.clearProperty("AWS_BUCKET");
+        System.clearProperty("DISCORD_TOKEN");
         log.info("S3 TestContainers instances stopped in {}ms", System.currentTimeMillis() - start);
     }
 

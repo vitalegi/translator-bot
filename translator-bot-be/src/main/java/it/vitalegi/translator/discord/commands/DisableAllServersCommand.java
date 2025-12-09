@@ -2,7 +2,7 @@ package it.vitalegi.translator.discord.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import it.vitalegi.translator.discord.CommandHandler;
-import it.vitalegi.translator.discord.DiscordBot;
+import it.vitalegi.translator.discord.DiscordBotImpl;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
 import it.vitalegi.translator.discord.service.DiscordPermissionService;
 import it.vitalegi.translator.service.DiscordService;
@@ -30,7 +30,7 @@ public class DisableAllServersCommand implements CommandHandler {
         var userId = e.getUser().getId().asString();
         log.info("user {}, disable_servers", userId);
 
-        return DiscordBot.executeBlocking(() -> {
+        return DiscordBotImpl.executeBlocking(() -> {
                     discordService.disableAllServers();
                     return true;
                 }) //
