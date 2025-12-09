@@ -125,10 +125,10 @@ public class OnMessageCreate {
                 .filter(channel -> channel instanceof TextChannel) //
                 .map(channel -> (TextChannel) channel) //
                 .map(channel -> {
-                    log.info("Analyzing channel {}", channel.getName());
+                    log.debug("Analyzing channel {}", channel.getName());
                     var entry = connectedEntries.stream().filter(connected -> connected.getChannelName().equals(channel.getName())).findFirst().orElse(null);
                     if (entry == null) {
-                        log.info("Skip channel {}", channel.getName());
+                        log.debug("Skip channel {}", channel.getName());
                         return null;
                     }
                     return new Tuple2<>(channel, entry);

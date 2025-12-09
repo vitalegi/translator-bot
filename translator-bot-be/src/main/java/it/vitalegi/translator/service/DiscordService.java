@@ -85,10 +85,9 @@ public class DiscordService {
                 .map(DiscordServerChannelLanguageEntity::getServerChannelGroup) //
                 .map(ServerChannelGroupEntity::getServerChannelGroupId) //
                 .toList();
-        log.info("Target groups: {}", targetServerChannelGroupIds);
         return channels.stream() //
                 .filter(c -> targetServerChannelGroupIds.contains(c.getServerChannelGroup().getServerChannelGroupId())) //
-                .peek(c -> log.info("connected channel: {}", c)).toList();
+                .peek(c -> log.debug("connected channel: {}", c)).toList();
     }
 
     @Transactional
@@ -97,6 +96,11 @@ public class DiscordService {
         entity.setAllowed(allowed);
         entity.setLastUpdate(now());
         return discordServerWhitelistRepository.save(entity);
+    }
+
+    @Transactional
+    public void disableAllServers() {
+        discordServerWhitelistRepository.disableAllServers(now());
     }
 
     @Transactional
@@ -184,9 +188,6 @@ public class DiscordService {
         var serverChannelGroupEntity = serverChannelGroupRepository.findById(serverChannelGroupId).get();
         var userEntity = discordServerUserRepository.findById(discordUserId).get();
         var discordServerEntity = discordServerRepository.findById(discordServerId).get();
-        log.info("channel: {}", serverChannelGroupEntity);
-        log.info("user: {}", userEntity);
-        log.info("server: {}", discordServerEntity);
         var entity = new DiscordServerUserMessageEntity();
         entity.setServerChannelGroup(serverChannelGroupEntity);
         entity.setDiscordServerUser(userEntity);

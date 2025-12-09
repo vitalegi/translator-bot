@@ -1,0 +1,6 @@
+{
+  "name": "disable-servers",
+  "type": 1,
+  "description": "Disable all server, stop translation feature",
+  "options": []
+}
