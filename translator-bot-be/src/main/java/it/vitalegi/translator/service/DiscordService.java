@@ -2,8 +2,11 @@ package it.vitalegi.translator.service;
 
 import it.vitalegi.translator.entity.DiscordServerChannelLanguageEntity;
 import it.vitalegi.translator.entity.DiscordServerEntity;
+import it.vitalegi.translator.entity.DiscordServerUserEntity;
+import it.vitalegi.translator.entity.DiscordServerUserMessageEntity;
 import it.vitalegi.translator.entity.DiscordServerWhitelistEntity;
 import it.vitalegi.translator.entity.ServerChannelGroupEntity;
+import it.vitalegi.translator.model.DiscordServer;
 import it.vitalegi.translator.repository.DiscordServerChannelLanguageRepository;
 import it.vitalegi.translator.repository.DiscordServerRepository;
 import it.vitalegi.translator.repository.DiscordServerUserMessageRepository;
@@ -19,6 +22,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -55,6 +60,37 @@ public class DiscordService {
         return serverId;
     }
 
+    public DiscordServer getDiscordServer(String serverId) {
+        var entity = discordServerRepository.findById(serverId).orElseThrow(() -> new IllegalArgumentException("Server " + serverId + " not found"));
+        var out = new DiscordServer();
+        out.setDiscordServerId(entity.getDiscordServerId());
+        out.setName(entity.getName());
+        out.setMonthlyMaxTotalCharacters(entity.getMonthlyMaxTotalCharacters());
+        out.setMonthlyMaxTotalCharactersPerUser(entity.getMonthlyMaxTotalCharactersPerUser());
+        out.setCreationDate(entity.getCreationDate());
+        out.setLastUpdate(entity.getLastUpdate());
+        return out;
+    }
+
+    public String getDiscordServerChannelLanguage(String serverId, String channelName) {
+        var channels = discordServerChannelLanguageRepository.findAllByServerIdAndChannelName(serverId, channelName);
+        return channels.stream().filter(c -> c.getChannelName().equals(channelName)) //
+                .map(DiscordServerChannelLanguageEntity::getChannelSourceLanguage) //
+                .findFirst().orElse(null);
+    }
+
+    public List<DiscordServerChannelLanguageEntity> getDiscordServerChannelGroupConnectedEntries(String serverId, String channelName) {
+        var channels = discordServerChannelLanguageRepository.findAllByServerId(serverId);
+        var targetServerChannelGroupIds = channels.stream().filter(c -> c.getChannelName().equals(channelName)) //
+                .map(DiscordServerChannelLanguageEntity::getServerChannelGroup) //
+                .map(ServerChannelGroupEntity::getServerChannelGroupId) //
+                .toList();
+        log.info("Target groups: {}", targetServerChannelGroupIds);
+        return channels.stream() //
+                .filter(c -> targetServerChannelGroupIds.contains(c.getServerChannelGroup().getServerChannelGroupId())) //
+                .peek(c -> log.info("connected channel: {}", c)).toList();
+    }
+
     @Transactional
     public DiscordServerWhitelistEntity updateDiscordServerWhitelist(String serverId, boolean allowed) {
         var entity = discordServerWhitelistRepository.findByDiscordServerId(serverId);
@@ -69,6 +105,7 @@ public class DiscordService {
         entity.setMonthlyMaxTotalCharacters(monthlyMaxTotalCharacters);
         entity.setMonthlyMaxTotalCharactersPerUser(monthlyMaxTotalCharactersPerUser);
         entity.setLastUpdate(now());
+
         return discordServerRepository.save(entity);
     }
 
@@ -87,12 +124,27 @@ public class DiscordService {
     @Transactional
     public DiscordServerChannelLanguageEntity removeDiscordServerChannelLanguage(String channelGroupName, String serverId, String channel) {
         var channelGroupId = serverChannelGroupRepository.findByName(channelGroupName).getServerChannelGroupId();
-        var entries = discordServerChannelLanguageRepository.findAllByServerId(serverId, channelGroupId);
+        var entries = discordServerChannelLanguageRepository.findAllByServerIdAndChannelGroupId(serverId, channelGroupId);
         var entity = entries.stream().filter(e -> e.getChannelName().equals(channel)).findFirst().orElse(null);
         if (entity != null) {
             discordServerChannelLanguageRepository.delete(entity);
         }
         return entity;
+    }
+
+    public boolean isServerAllowed(String serverId) {
+        var entity = discordServerWhitelistRepository.findByDiscordServerId(serverId);
+        if (entity == null) {
+            return false;
+        }
+        return entity.isAllowed();
+    }
+
+    public Long getServerUsedMonthlyQuota(String discordServerId) {
+        var today = LocalDate.now();
+        var from = LocalDate.of(today.getYear(), today.getMonth(), 1).atStartOfDay(ZoneId.of("UTC")).toInstant();
+        var usedQuota = discordServerUserMessageRepository.getTotalSourceLength(from, discordServerId);
+        return usedQuota != null ? usedQuota : 0L;
     }
 
     public String getInfo() {
@@ -102,7 +154,7 @@ public class DiscordService {
         var today = LocalDate.now();
         var from = LocalDate.of(today.getYear(), today.getMonth(), 1).atStartOfDay(ZoneId.of("UTC")).toInstant();
         for (var server : servers) {
-            var totalSourceCharacters = discordServerUserMessageRepository.getTotalSourceLength(from, server.getDiscordServerId());
+            var totalSourceCharacters = getServerUsedMonthlyQuota(server.getDiscordServerId());
             var totalMessagesCount = discordServerUserMessageRepository.getTotalMessagesCount(from, server.getDiscordServerId());
             var channelGroups = serverChannelGroupRepository.findAllByServerId(server.getDiscordServerId());
 
@@ -116,13 +168,54 @@ public class DiscordService {
             channelGroups.forEach(cg -> {
                 sb.append("\n  - ").append(cg.getServerChannelGroupId()).append(": ").append(cg.getName());
                 sb.append("\n    entries:");
-                var channelLanguages = discordServerChannelLanguageRepository.findAllByServerId(server.getDiscordServerId(), cg.getServerChannelGroupId());
+                var channelLanguages = discordServerChannelLanguageRepository.findAllByServerIdAndChannelGroupId(server.getDiscordServerId(), cg.getServerChannelGroupId());
                 channelLanguages.stream() //
                         //.filter(cl -> cl.getServerChannelGroup().getServerChannelGroupId().equals(cg.getServerChannelGroupId()))
                         .forEach(cl -> sb.append("\n    - ").append(cl.getChannelName()).append(": ").append(cl.getChannelSourceLanguage()));
             });
         }
         return sb.toString();
+    }
+
+    public DiscordServerUserMessageEntity addDiscordServerUserMessage(String sourceLanguage, String targetLanguage, int sourceLength, int targetLength, UUID serverChannelGroupId, String discordServerId, UUID discordUserId) {
+        log.info("Store stats. from {} ({}) to {} ({}). channel={}, server={}, user={}", sourceLanguage, sourceLength, targetLanguage, targetLength, serverChannelGroupId, discordServerId, discordUserId);
+        var serverChannelGroupEntity = serverChannelGroupRepository.findById(serverChannelGroupId).get();
+        var userEntity = discordServerUserRepository.findById(discordUserId).get();
+        var discordServerEntity = discordServerRepository.findById(discordServerId).get();
+        log.info("channel: {}", serverChannelGroupEntity);
+        log.info("user: {}", userEntity);
+        log.info("server: {}", discordServerEntity);
+        var entity = new DiscordServerUserMessageEntity();
+        entity.setServerChannelGroup(serverChannelGroupEntity);
+        entity.setDiscordServerUser(userEntity);
+        entity.setDiscordServer(discordServerEntity);
+        entity.setSourceLanguage(sourceLanguage);
+        entity.setTargetLanguage(targetLanguage);
+        entity.setSourceLength(sourceLength);
+        entity.setTargetLength(targetLength);
+        entity.setCreationDate(now());
+
+        return discordServerUserMessageRepository.save(entity);
+    }
+
+    public DiscordServerUserEntity syncDiscordServerUser(String discordServerId, String discordUserId, String discordUsername) {
+        var discordServerEntity = discordServerRepository.findById(discordServerId).get();
+        var userEntity = discordServerUserRepository.findByDiscordServerIdAndUserId(discordServerEntity.getDiscordServerId(), discordUserId);
+        if (userEntity != null) {
+            if (!Objects.equals(userEntity.getUsername(), discordUsername)) {
+                userEntity.setUsername(discordUsername);
+                userEntity.setLastUpdate(now());
+                return discordServerUserRepository.save(userEntity);
+            }
+            return userEntity;
+        }
+        var entity = new DiscordServerUserEntity();
+        entity.setUsername(discordUsername);
+        entity.setUserId(discordUserId);
+        entity.setDiscordServer(discordServerEntity);
+        entity.setCreationDate(now());
+        entity.setLastUpdate(now());
+        return discordServerUserRepository.save(entity);
     }
 
     protected DiscordServerEntity addDiscordServer(String serverId, String name, long monthlyMaxTotalCharacters, long monthlyMaxTotalCharactersPerUser) {

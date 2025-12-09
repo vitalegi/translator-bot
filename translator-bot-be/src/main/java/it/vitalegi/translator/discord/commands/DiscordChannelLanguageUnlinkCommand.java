@@ -1,7 +1,6 @@
 package it.vitalegi.translator.discord.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono;
 import it.vitalegi.translator.discord.CommandHandler;
 import it.vitalegi.translator.discord.DiscordBot;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
@@ -10,6 +9,7 @@ import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -27,7 +27,7 @@ public class DiscordChannelLanguageUnlinkCommand implements CommandHandler {
     }
 
     @Override
-    public InteractionApplicationCommandCallbackReplyMono onEvent(ChatInputInteractionEvent e) {
+    public Mono<Void> onEvent(ChatInputInteractionEvent e) {
         discordPermissionService.checkPermission(e, DiscordPermission.SUPERADMIN);
 
         var channelGroup = e.getOptionAsString("channel_group").orElseThrow(() -> new IllegalArgumentException("channel_group is mandatory"));
@@ -35,9 +35,9 @@ public class DiscordChannelLanguageUnlinkCommand implements CommandHandler {
         var channel = e.getOptionAsString("channel").orElseThrow(() -> new IllegalArgumentException("channel is mandatory"));
         var userId = e.getUser().getId().asString();
 
-        DiscordBot.executeBlocking(() -> discordService.removeDiscordServerChannelLanguage(channelGroup, serverId, channel)).block();
         log.info("user {}, discord-channel-language-unlink {} {} {}", userId, channelGroup, serverId, channel);
 
-        return e.reply("Successfully updated server");
+        return DiscordBot.executeBlocking(() -> discordService.removeDiscordServerChannelLanguage(channelGroup, serverId, channel)) //
+                .flatMap(o -> e.reply("Successfully updated server"));
     }
 }

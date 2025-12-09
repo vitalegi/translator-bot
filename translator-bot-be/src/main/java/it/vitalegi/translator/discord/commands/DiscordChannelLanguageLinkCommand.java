@@ -1,7 +1,6 @@
 package it.vitalegi.translator.discord.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.spec.InteractionApplicationCommandCallbackReplyMono;
 import it.vitalegi.translator.discord.CommandHandler;
 import it.vitalegi.translator.discord.DiscordBot;
 import it.vitalegi.translator.discord.constants.DiscordPermission;
@@ -11,8 +10,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
-import java.util.concurrent.Callable;
 
 @Slf4j
 @Service
@@ -30,7 +27,7 @@ public class DiscordChannelLanguageLinkCommand implements CommandHandler {
     }
 
     @Override
-    public InteractionApplicationCommandCallbackReplyMono onEvent(ChatInputInteractionEvent e) {
+    public Mono<Void> onEvent(ChatInputInteractionEvent e) {
         discordPermissionService.checkPermission(e, DiscordPermission.SUPERADMIN);
 
         var channelGroupName = e.getOptionAsString("channel_group").orElseThrow(() -> new IllegalArgumentException("channel_group is mandatory"));
@@ -39,10 +36,10 @@ public class DiscordChannelLanguageLinkCommand implements CommandHandler {
         var language = e.getOptionAsString("language").orElseThrow(() -> new IllegalArgumentException("language is mandatory"));
         var userId = e.getUser().getId().asString();
 
-        DiscordBot.executeBlocking(() -> discordService.addDiscordServerChannelLanguage(channelGroupName, serverId, channel, language)).block();
         log.info("user {}, discord-channel-language-link {} {} {} {}", userId, channelGroupName, serverId, channel, language);
 
-        return e.reply("Successfully updated server");
+        return DiscordBot.executeBlocking(() -> discordService.addDiscordServerChannelLanguage(channelGroupName, serverId, channel, language)) //
+                .flatMap(o -> e.reply("Successfully updated server"));
     }
 
 }

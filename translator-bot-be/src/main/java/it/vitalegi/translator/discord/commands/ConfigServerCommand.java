@@ -10,6 +10,7 @@ import it.vitalegi.translator.service.DiscordService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ public class ConfigServerCommand implements CommandHandler {
     }
 
     @Override
-    public InteractionApplicationCommandCallbackReplyMono onEvent(ChatInputInteractionEvent e) {
+    public Mono<Void> onEvent(ChatInputInteractionEvent e) {
         discordPermissionService.checkPermission(e, DiscordPermission.SUPERADMIN);
         var serverId = e.getOptionAsString("server_id").orElseThrow(() -> new IllegalArgumentException("server_id is mandatory"));
         var monthlyMaxTotalCharacters = e.getOptionAsLong("month_max_tot_chars").orElse(100_000L);
@@ -33,9 +34,8 @@ public class ConfigServerCommand implements CommandHandler {
 
         var userId = e.getUser().getId().asString();
 
-        DiscordBot.executeBlocking(() -> discordService.updateDiscordServerLimits(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser));
         log.info("user {}, config_server {}, max={}, per_user={}", userId, serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser);
-
-        return e.reply("Successfully updated server");
+        return DiscordBot.executeBlocking(() -> discordService.updateDiscordServerLimits(serverId, monthlyMaxTotalCharacters, monthlyMaxTotalCharactersPerUser))
+                .flatMap(out -> e.reply("Successfully updated server"));
     }
 }

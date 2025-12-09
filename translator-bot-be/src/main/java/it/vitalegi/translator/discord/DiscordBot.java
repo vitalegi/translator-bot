@@ -20,8 +20,6 @@ public class DiscordBot {
 
     OnMessageCreate onMessageCreate;
 
-    OnChatInputInteraction onChatInputInteraction;
-
     public static Scheduler scheduler() {
         return Schedulers.boundedElastic();
     }
