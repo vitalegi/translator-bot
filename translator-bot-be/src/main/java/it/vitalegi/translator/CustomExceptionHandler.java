@@ -1,6 +1,5 @@
 package it.vitalegi.translator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.vitalegi.translator.exception.MissingCookieException;
 import it.vitalegi.translator.exception.UnauthorizedAccessException;
 import it.vitalegi.translator.model.ErrorResponse;
@@ -24,12 +23,10 @@ import java.util.stream.Stream;
 @Component
 @ControllerAdvice
 public class CustomExceptionHandler {
-    ObjectMapper mapper;
     List<String> skipClasses;
     boolean singleLine;
 
-    public CustomExceptionHandler(ObjectMapper mapper, @Value("${exception.logging.skip-classes}") List<String> skipClasses, @Value("${exception.logging.single-line}") boolean singleLine) {
-        this.mapper = mapper;
+    public CustomExceptionHandler(@Value("${exception.logging.skip-classes}") List<String> skipClasses, @Value("${exception.logging.single-line}") boolean singleLine) {
         this.skipClasses = Objects.requireNonNullElse(skipClasses, Collections.emptyList());
         this.singleLine = singleLine;
     }
