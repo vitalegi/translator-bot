@@ -158,7 +158,7 @@ public class OnMessageCreate {
     }
 
     protected String formatOutputMessage(String author, String sourceLanguage, String sourceMessage, String targetMessage) {
-        return "**" + author + "**: " + targetMessage + "\n--------------\n" + sourceLanguage + ": _" + sourceMessage + "_";
+        return "**" + author + "**: " + targetMessage;
     }
 
     protected String executeTranslationBlocking(TranslationMessageRequest request) {
