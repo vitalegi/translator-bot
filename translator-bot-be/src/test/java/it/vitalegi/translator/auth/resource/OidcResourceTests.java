@@ -1,24 +1,24 @@
 package it.vitalegi.translator.auth.resource;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.vitalegi.translator.App;
-import it.vitalegi.translator.auth.model.OidcTokenResponse;
 import it.vitalegi.translator.config.DiscordConfigurationTests;
 import it.vitalegi.translator.integration.oidc.CognitoService;
 import it.vitalegi.translator.integration.oidc.model.CognitoOidcResponse;
+import it.vitalegi.translator.auth.model.OidcTokenResponse;
 import jakarta.servlet.http.Cookie;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
 
 import java.io.UnsupportedEncodingException;
 
@@ -54,8 +54,8 @@ public class OidcResourceTests {
         void given_validRequest_then_validResponseAndCookie() throws Exception {
             when(cognitoService.token("A", "http://localhost:8080/redirect")).thenReturn(cognitoOidcResponse());
             var result = mockMvc.perform(post("/oidc/token").contentType(MediaType.APPLICATION_JSON).content("""
-                            {"code":"A", "redirectUrl":"http://localhost:8080/redirect"}
-                            """)) //
+                        {"code":"A", "redirectUrl":"http://localhost:8080/redirect"}
+                        """)) //
                     .andDo(print()) //
                     .andExpect(status().isOk()) //
                     .andExpect(cookie().exists("refresh_token")) //
@@ -78,8 +78,8 @@ public class OidcResourceTests {
         void given_invalidRequest_then_error() throws Exception {
             when(cognitoService.token("A", "http://localhost:8080/redirect")).thenThrow(new RuntimeException("Invalid params"));
             var result = mockMvc.perform(post("/oidc/token").contentType(MediaType.APPLICATION_JSON).content("""
-                            {"code":"A", "redirectUrl":"http://localhost:8080/redirect"}
-                            """)) //
+                        {"code":"A", "redirectUrl":"http://localhost:8080/redirect"}
+                        """)) //
                     .andDo(print()) //
                     .andExpect(status().is(500)) //
                     .andExpect(cookie().doesNotExist("refresh_token")) //
@@ -150,7 +150,7 @@ public class OidcResourceTests {
     protected <E> E payload(MockHttpServletResponse response, Class<E> clazz) {
         try {
             return objectMapper.readValue(response.getContentAsString(), clazz);
-        } catch (JacksonException | UnsupportedEncodingException e) {
+        } catch (JsonProcessingException | UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
     }
