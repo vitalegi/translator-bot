@@ -27,6 +27,9 @@ public class AwsTranslateImpl {
     }
 
     public String translate(String sourceLanguage, String targetLanguage, String message) {
+        if (message.isBlank()) {
+            return "";
+        }
         var textRequest = TranslateTextRequest.builder().sourceLanguageCode(sourceLanguage).targetLanguageCode(targetLanguage).text(message).build();
         return translateClient.translateText(textRequest).translatedText();
     }
