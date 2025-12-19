@@ -104,3 +104,4 @@ discord:
     - 1286613721421971559
   maxMessageLength: 1000
   commandsDir: ./commands
+  tmpDir: ./tmp
